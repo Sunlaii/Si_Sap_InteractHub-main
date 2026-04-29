@@ -1,0 +1,475 @@
+\chapter{KIỂM THỬ VÀ TRIỂN KHAI}
+
+\section{Kiểm thử phần mềm}
+
+\subsection{Chiến lược kiểm thử}
+Dự án áp dụng phương pháp kiểm thử multi-layer:
+
+\begin{enumerate}
+    \item \textbf{Unit Tests:} Kiểm thử từng method riêng lẻ
+    \item \textbf{Integration Tests:} Kiểm thử giao tiếp giữa các modules
+    \item \textbf{API Tests:} Kiểm thử endpoints
+    \item \textbf{UI/E2E Tests:} Kiểm thử toàn bộ flows (end-to-end)
+\end{enumerate}
+
+\subsection{Unit Tests}
+
+\subsubsection{Framework}
+Sử dụng \textbf{xUnit} kết hợp \textbf{Moq} library:
+
+\begin{verbatim}
+// PostsService.Tests.cs
+public class PostsServiceTests
+{
+    private readonly Mock<IRepository<Post>> _mockRepository;
+    private readonly PostsService _service;
+    
+    public PostsServiceTests()
+    {
+        _mockRepository = new Mock<IRepository<Post>>();
+        _service = new PostsService(_mockRepository.Object);
+    }
+    
+    [Fact]
+    public async Task CreatePost_WithValidData_ReturnsPost()
+    {
+        // Arrange
+        var request = new CreatePostRequest 
+        { 
+            Content = "Test post",
+            UserId = "user123"
+        };
+        
+        // Act
+        var result = await _service.CreatePost(request);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Test post", result.Content);
+        _mockRepository.Verify(
+            x => x.AddAsync(It.IsAny<Post>()), 
+            Times.Once);
+    }
+    
+    [Fact]
+    public async Task CreatePost_WithEmptyContent_ThrowsException()
+    {
+        // Arrange
+        var request = new CreatePostRequest { Content = "" };
+        
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _service.CreatePost(request));
+    }
+}
+\end{verbatim}
+
+\subsubsection{Coverage Goals}
+\begin{itemize}
+    \item \textbf{Target Coverage:} Minimum 60\% cho services
+    \item \textbf{Critical Services:} AuthService, PostsService - 80\%+
+    \item \textbf{Test Methods:} Happy path + error cases + edge cases
+    \item \textbf{Execution:} CI/CD pipeline chạy tests tự động
+\end{itemize}
+
+\subsection{Integration Tests}
+
+\begin{verbatim}
+// UsersService.Integration.Tests.cs
+[Collection("Database collection")]
+public class UsersServiceIntegrationTests
+{
+    private readonly IServiceProvider _serviceProvider;
+    
+    [Fact]
+    public async Task UpdateUserProfile_SavesCorrectly()
+    {
+        // Arrange
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider
+                .GetRequiredService<AppDbContext>();
+            
+            var user = new ApplicationUser 
+            { 
+                Id = "user1",
+                DisplayName = "John Doe",
+                Bio = "Old bio"
+            };
+            await dbContext.Users.AddAsync(user);
+            await dbContext.SaveChangesAsync();
+            
+            var service = scope.ServiceProvider
+                .GetRequiredService<IUsersService>();
+            
+            // Act
+            await service.UpdateProfile("user1", new ProfileUpdateRequest
+            {
+                DisplayName = "Jane Doe",
+                Bio = "New bio"
+            });
+            
+            // Assert
+            var updated = await dbContext.Users.FindAsync("user1");
+            Assert.Equal("Jane Doe", updated.DisplayName);
+            Assert.Equal("New bio", updated.Bio);
+        }
+    }
+}
+\end{verbatim}
+
+\subsection{API Tests}
+
+\begin{verbatim}
+// PostsController.API.Tests.cs
+public class PostsControllerTests
+{
+    private readonly HttpClient _client;
+    
+    [Fact]
+    public async Task CreatePost_ReturnsCreated()
+    {
+        // Arrange
+        var token = await GetJwtToken("user123");
+        _client.DefaultRequestHeaders
+            .Authorization = new AuthenticationHeaderValue(
+                "Bearer", token);
+        
+        var request = new CreatePostRequest 
+        { 
+            Content = "My first post" 
+        };
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, 
+            Encoding.UTF8, "application/json");
+        
+        // Act
+        var response = await _client.PostAsync("/api/posts", content);
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer
+            .Deserialize<PostResponse>(responseContent);
+        Assert.Equal("My first post", result.Content);
+    }
+    
+    [Fact]
+    public async Task GetPost_WithoutAuth_ReturnUnauthorized()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/posts/1");
+        
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+}
+\end{verbatim}
+
+\subsection{E2E/UI Tests}
+
+Sử dụng Playwright hoặc Cypress cho browser automation:
+
+\begin{verbatim}
+// e2e/user-flow.spec.ts (Playwright)
+test.describe('User Social Flow', () => {
+    test('User can register, login, post, and like', async ({ page }) => {
+        // Register
+        await page.goto('http://localhost:3000/register');
+        await page.fill('input[name=email]', 'test@example.com');
+        await page.fill('input[name=password]', 'password123');
+        await page.click('button:has-text("Register")');
+        await page.waitForURL('http://localhost:3000/');
+        
+        // Login
+        await page.goto('http://localhost:3000/login');
+        await page.fill('input[name=email]', 'test@example.com');
+        await page.fill('input[name=password]', 'password123');
+        await page.click('button:has-text("Login")');
+        await page.waitForURL('http://localhost:3000/home');
+        
+        // Create post
+        await page.fill('textarea', 'My first post!');
+        await page.click('button:has-text("Post")');
+        await page.waitForSelector('.post-card');
+        
+        // Like post
+        await page.click('button:has-text("❤️")');
+        await page.waitForSelector('text=1 Likes');
+    });
+});
+\end{verbatim}
+
+\section{Triển khai CI/CD}
+
+\subsection{GitHub Actions}
+
+\begin{verbatim}
+# .github/workflows/ci-cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 10.0.x
+      
+      - name: Restore
+        run: dotnet restore backend/
+      
+      - name: Build
+        run: dotnet build backend/ --no-restore
+      
+      - name: Run Tests
+        run: dotnet test backend/ --no-build 
+                    --verbosity normal 
+                    --logger "trx;LogFileName=test-results.trx"
+      
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage.cobertura.xml
+      
+      - name: Publish
+        run: dotnet publish backend/ -c Release 
+                    -o ./publish
+      
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.REGISTRY_NAME }}/api:${{ 
+            github.sha }} .
+          docker push ${{ secrets.REGISTRY_NAME }}/api:${{ 
+            github.sha }}
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      
+      - name: Install
+        run: npm ci --prefix frontend
+      
+      - name: Lint
+        run: npm run lint --prefix frontend
+      
+      - name: Build
+        run: npm run build --prefix frontend
+        env:
+          REACT_APP_API_URL: ${{ secrets.API_URL }}
+      
+      - name: Upload to Azure Blob Storage
+        run: |
+          az storage blob upload-batch \
+            -d web \
+            -s frontend/dist \
+            -c ${{ secrets.STORAGE_CONTAINER }}
+      
+      - name: Purge CDN
+        run: az cdn endpoint purge -g ${{ secrets.RESOURCE_GROUP }} 
+                     -n ${{ secrets.CDN_ENDPOINT }} 
+                     --profile-name ${{ secrets.CDN_PROFILE }}
+
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.APP_SERVICE_NAME }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          images: ${{ secrets.REGISTRY_NAME }}/api:${{ github.sha }}
+\end{verbatim}
+
+\subsection{Build Stages}
+
+\begin{enumerate}
+    \item \textbf{Source Stage:} Pull code từ GitHub
+    \item \textbf{Build Stage:} Compile \& run tests
+    \item \textbf{Quality Gate:} Verify test coverage \& code quality
+    \item \textbf{Package Stage:} Create Docker images
+    \item \textbf{Deploy Stage:} Deploy to Azure (if main branch)
+\end{enumerate}
+
+\section{Triển khai Cloud}
+
+\subsection{Azure Infrastructure}
+
+\begin{verbatim}
+┌─────────────────────────────────────┐
+│       Azure Container Registry      │
+│    (Docker Images Storage)          │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│    Azure App Service                │
+│  (Web API + Background Jobs)        │
+│  - Pricing Tier: B2 or higher       │
+│  - Instances: 2+ for HA             │
+│  - Auto-scale: 3-10 instances       │
+└──────────────┬──────────────────────┘
+               │
+    ┌──────────┼──────────┐
+    │          │          │
+┌───▼──┐  ┌────▼────┐  ┌─▼────────────┐
+│ DNS  │  │  Azure  │  │ Application  │
+│  CDN │  │   SQL   │  │  Insights    │
+│      │  │Database │  │  Monitoring  │
+└──────┘  │         │  └──────────────┘
+          │- Premium│
+          │ - Geo- │
+          │ Replicat
+          │ed       │
+          └─────────┘
+\end{verbatim}
+
+\subsection{Azure Services Used}
+
+\begin{enumerate}
+    \item \textbf{Azure App Service:}
+    \begin{itemize}
+        \item Host cho ASP.NET Core API
+        \item Auto-scaling based on CPU/Memory
+        \item Built-in deployment slots (staging)
+        \item Application Insights integration
+    \end{itemize}
+
+    \item \textbf{Azure SQL Database:}
+    \begin{itemize}
+        \item Managed SQL Server database
+        \item Automatic backups \& geo-replication
+        \item Point-in-time restore
+        \item Firewall rules \& VNet integration
+    \end{itemize}
+
+    \item \textbf{Azure Blob Storage:}
+    \begin{itemize}
+        \item Store user uploaded images
+        \item CDN integration for fast delivery
+        \item Lifecycle management (auto-delete old files)
+        \item Access via SAS tokens (secure URLs)
+    \end{itemize}
+
+    \item \textbf{Azure Key Vault:}
+    \begin{itemize}
+        \item Store connection strings \& secrets
+        \item Rotate keys automatically
+        \item Audit access logs
+        \item Access via managed identity
+    \end{itemize}
+
+    \item \textbf{Azure Application Insights:}
+    \begin{itemize}
+        \item Application Performance Monitoring (APM)
+        \item Track requests, dependencies, exceptions
+        \item Custom metrics \& events
+        \item Alerting based on thresholds
+    \end{itemize}
+
+    \item \textbf{Azure CDN:}
+    \begin{itemize}
+        \item Cache static assets (React bundles)
+        \item Cache API responses
+        \item Edge server locations worldwide
+        \item DDoS protection
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Deployment Process}
+
+\subsubsection{Step 1: Prepare Infrastructure}
+\begin{verbatim}
+# Using Azure Resource Manager template (Bicep)
+az deployment group create \
+  --resource-group my-rg \
+  --template-file main.bicep \
+  --parameters environment=prod
+\end{verbatim}
+
+\subsubsection{Step 2: Deploy Application}
+\begin{verbatim}
+# Backend deployment
+az webapp deployment container config \
+  --name interacthub-api \
+  --resource-group my-rg \
+  --docker-registry-server-url registry.url \
+  --docker-registry-server-username username \
+  --docker-registry-server-password password
+
+az webapp deployment container config \
+  --name interacthub-api \
+  --settings DOCKER_REGISTRY_SERVER_URL=...
+\end{verbatim}
+
+\subsubsection{Step 3: Configure Environment}
+\begin{verbatim}
+# Set connection strings via Key Vault
+az webapp config appsettings set \
+  --name interacthub-api \
+  --resource-group my-rg \
+  --settings \
+    ConnectionStrings__DefaultConnection=@Microsoft.KeyVault(\
+      SecretsUri=https://myvault.vault.azure.net/\
+      secrets/db-conn-string/) \
+    Jwt__Key=@Microsoft.KeyVault(\
+      SecretsUri=https://myvault.vault.azure.net/\
+      secrets/jwt-key/)
+\end{verbatim}
+
+\subsubsection{Step 4: Run Migrations}
+\begin{verbatim}
+# Connect to Azure App Service Kudu
+# And run migrations
+dotnet ef database update \
+  -c AppDbContext \
+  --connection "connection-string"
+\end{verbatim}
+
+\section{Monitoring \& Troubleshooting}
+
+\subsection{Application Insights}
+
+\begin{itemize}
+    \item \textbf{Request Duration:} Monitor API response times
+    \item \textbf{Error Rate:} Track exceptions \& failed requests
+    \item \textbf{Dependencies:} Database, external API calls
+    \item \textbf{Performance Counters:} CPU, Memory, Disk I/O
+    \item \textbf{Custom Metrics:} Business metrics (active users, posts/day)
+\end{itemize}
+
+\subsection{Alerts}
+
+\begin{verbatim}
+// Example alerts configured
+- If error rate > 5% for 5 minutes → Alert
+- If response time > 2 seconds (p95) → Alert
+- If CPU > 80% for 10 minutes → Alert
+- If database connections > 90 threshold → Alert
+\end{verbatim}
+
+\subsection{Scaling Strategy}
+
+\begin{itemize}
+    \item \textbf{Vertical Scaling:} Upgrade App Service tier (B2 → P1V2)
+    \item \textbf{Horizontal Scaling:} Auto-scale 3-10 instances
+    \item \textbf{Database Scaling:} Upgrade SQL Database tier
+    \item \textbf{Cache:} Add Redis for frequently accessed data
+    \item \textbf{CDN:} Cache static assets at edge locations
+\end{itemize}

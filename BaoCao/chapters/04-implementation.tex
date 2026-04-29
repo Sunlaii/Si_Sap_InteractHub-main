@@ -1,0 +1,524 @@
+\chapter{THỰC HIỆN CÀI ĐẶT}
+
+\section{Cấu trúc tổ chức mã nguồn}
+
+\subsection{Repository Structure}
+Mã nguồn dự án trên GitHub được phân chia thành các module/thư mục rõ ràng:
+
+\begin{verbatim}
+Si_Sap_InteractHub-main/
+├── /backend                  # ASP.NET Core API
+│   ├── Controllers/          # API endpoints
+│   ├── Services/             # Business logic
+│   ├── Models/
+│   │   ├── Entities/         # Database entities
+│   │   └── DTOs/             # Data transfer objects
+│   ├── Data/                 # DbContext
+│   ├── Migrations/           # EF Core migrations
+│   ├── Program.cs            # Startup configuration
+│   ├── appsettings.json      # Configuration
+│   └── backend.csproj        # Project file
+│
+├── /frontend                 # React TypeScript SPA
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── App.tsx       # Main component
+│   │   │   ├── routes.tsx    # Route definitions
+│   │   │   └── components/   # Reusable components
+│   │   ├── pages/            # Page components
+│   │   ├── services/         # API services
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── contexts/         # Context API
+│   │   ├── types/            # TypeScript types
+│   │   └── styles/           # Global styles
+│   ├── vite.config.ts        # Vite bundler config
+│   ├── tailwind.config.mjs   # Tailwind CSS config
+│   ├── package.json          # Dependencies
+│   └── index.html
+│
+├── /database                 # Database scripts
+│   └── InteractHub_full.sql  # Complete database schema
+│
+├── /BaoCao                   # Report (LaTeX)
+│   ├── chapters/             # Report chapters
+│   ├── images/               # Report images
+│   ├── main.tex              # Main report file
+│   └── main.pdf              # Generated PDF
+│
+├── /guidelines               # Documentation
+│   └── Guidelines.md         # Project guidelines
+│
+├── README.md                 # Project readme
+├── backend.sln               # Visual Studio solution
+└── InteracHub.slnx           # Alternative solution format
+\end{verbatim}
+
+\section{Phát triển Backend}
+
+\subsection{Database Setup}
+
+\subsubsection{Entity Framework Core Configuration}
+\begin{verbatim}
+// Program.cs
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString(
+            "DefaultConnection")));
+\end{verbatim}
+
+\subsubsection{Migrations}
+Dự án sử dụng Code-First migrations để quản lý schema:
+
+\begin{itemize}
+    \item \textbf{InitialCreate:} Tạo schema ban đầu với 10 entities
+    \item \textbf{AddEntityConstraintsAndSeedHashtags:} Thêm constraints và seed data hashtags phổ biến
+    \item \textbf{AddQueryIndexes:} Tối ưu query performance bằng indexes
+\end{itemize}
+
+Command tạo migrations:
+\begin{verbatim}
+Add-Migration [MigrationName]
+Update-Database
+\end{verbatim}
+
+\subsection{API Controllers}
+
+\subsubsection{AuthController}
+Xử lý xác thực:
+
+\begin{verbatim}
+POST   /api/auth/register         - Đăng ký user mới
+POST   /api/auth/login            - Login & nhận JWT token
+POST   /api/auth/logout           - Logout
+POST   /api/auth/refresh-token    - Refresh JWT token
+\end{verbatim}
+
+Features:
+\begin{itemize}
+    \item Password validation (minimum 6 characters)
+    \item Email uniqueness check
+    \item JWT token generation
+    \item Secure password hashing via Identity
+\end{itemize}
+
+\subsubsection{PostsController}
+Quản lý bài viết:
+
+\begin{verbatim}
+GET    /api/posts                 - Lấy danh sách posts (paging)
+GET    /api/posts/{id}            - Chi tiết post
+POST   /api/posts                 - Tạo post mới
+PUT    /api/posts/{id}            - Cập nhật post
+DELETE /api/posts/{id}            - Xóa post
+GET    /api/posts/{id}/comments   - Danh sách comments
+GET    /api/posts/{id}/likes      - Danh sách likes
+\end{verbatim}
+
+Features:
+\begin{itemize}
+    \item Pagination (skip, take)
+    \item Include related data (User, Comments, Likes)
+    \item Image upload to Azure Blob Storage
+    \item Hashtag support
+    \item Only owner can edit/delete own posts
+\end{itemize}
+
+\subsubsection{UsersController}
+Quản lý user profiles:
+
+\begin{verbatim}
+GET    /api/users/{id}            - User profile
+PUT    /api/users/{id}            - Cập nhật profile
+GET    /api/users/{id}/posts      - Posts của user
+GET    /api/users/{id}/friends    - Danh sách bạn bè
+\end{verbatim}
+
+\subsubsection{FriendsController}
+Quản lý quan hệ kết bạn:
+
+\begin{verbatim}
+POST   /api/friends/request          - Gửi friend request
+PUT    /api/friends/{id}/accept      - Accept request
+PUT    /api/friends/{id}/reject      - Reject request
+DELETE /api/friends/{id}             - Remove friend
+GET    /api/friends                  - Danh sách bạn bè
+\end{verbatim}
+
+\subsubsection{Các Controllers khác}
+\begin{itemize}
+    \item \textbf{StoriesController:} Quản lý stories (24 giờ expiry)
+    \item \textbf{NotificationsController:} Quản lý thông báo real-time
+\end{itemize}
+
+\subsection{Service Layer}
+
+Các services chứa business logic:
+
+\begin{verbatim}
+IPostsService / PostsService
+├── CreatePost()
+├── UpdatePost()
+├── DeletePost()
+├── GetPostById()
+├── GetUserPosts()
+└── GetPostWithComments()
+
+IUsersService / UsersService
+├── GetUserProfile()
+├── UpdateProfile()
+├── GetUserById()
+└── SearchUsers()
+
+IFriendsService / FriendsService
+├── SendFriendRequest()
+├── AcceptRequest()
+├── RejectRequest()
+├── GetFriendsList()
+└── RemoveFriend()
+
+INotificationsService / NotificationsService
+├── CreateNotification()
+├── GetUserNotifications()
+├── MarkAsRead()
+└── DeleteNotification()
+\end{verbatim}
+
+Features:
+\begin{itemize}
+    \item Validation logic
+    \item Authorization checks (verify ownership)
+    \item Error handling
+    \item Async/await for performance
+\end{itemize}
+
+\subsection{DTOs (Data Transfer Objects)}
+
+DTOs được sử dụng để:
+\begin{itemize}
+    \item Tách biệt entities từ API response
+    \item Validate input từ client
+    \item Control fields được expose
+\end{itemize}
+
+\begin{verbatim}
+AuthDtos.cs
+├── RegisterRequest
+├── LoginRequest
+├── LoginResponse
+└── JwtTokenResponse
+
+PostDtos.cs
+├── CreatePostRequest
+├── UpdatePostRequest
+├── PostResponse
+├── PostListResponse
+└── PostDetailResponse
+
+SocialDtos.cs
+├── CommentRequest
+├── CommentResponse
+├── LikeResponse
+├── FriendshipRequest
+└── FriendshipResponse
+\end{verbatim}
+
+\subsection{Authentication \& Authorization}
+
+\subsubsection{JWT Setup}
+\begin{verbatim}
+// Program.cs
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options => {
+        options.TokenValidationParameters = new TokenValidationParameters {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+\end{verbatim}
+
+\subsubsection{Role-based Authorization}
+\begin{verbatim}
+// Program.cs
+builder.Services.AddAuthorization(options => {
+    options.AddPolicy("AdminOnly", policy => 
+        policy.RequireRole("Admin"));
+    
+    options.AddPolicy("UserOrAdmin", policy => 
+        policy.RequireRole("User", "Admin"));
+});
+
+// Controller usage
+[Authorize(Policy = "AdminOnly")]
+public async Task<IActionResult> DeletePost(int id) { ... }
+\end{verbatim}
+
+\section{Phát triển Frontend}
+
+\subsection{Project Structure}
+
+\begin{verbatim}
+src/
+├── app/
+│   ├── App.tsx               # Main component wrapper
+│   ├── routes.tsx            # Route configuration
+│   └── components/
+│       ├── Navbar.tsx
+│       ├── Sidebar.tsx
+│       ├── PostCard.tsx
+│       ├── CommentSection.tsx
+│       └── AuthForm.tsx
+│
+├── pages/
+│   ├── HomePage.tsx
+│   ├── ProfilePage.tsx
+│   ├── FriendsPage.tsx
+│   ├── NotificationsPage.tsx
+│   └── LoginPage.tsx
+│
+├── services/
+│   ├── apiClient.ts          # Axios instance with JWT
+│   ├── authService.ts
+│   ├── postService.ts
+│   ├── userService.ts
+│   └── notificationService.ts
+│
+├── hooks/
+│   ├── useAuth.ts            # Auth context hook
+│   ├── usePosts.ts           # Post fetching hook
+│   └── useFriends.ts         # Friendship hook
+│
+├── contexts/
+│   ├── AuthContext.tsx       # Auth state & functions
+│   ├── NotificationContext.tsx
+│   └── UserContext.tsx
+│
+├── types/
+│   ├── User.ts
+│   ├── Post.ts
+│   ├── Comment.ts
+│   ├── Friendship.ts
+│   └── Notification.ts
+│
+└── styles/
+    ├── index.css
+    ├── tailwind.css
+    └── theme.css
+\end{verbatim}
+
+\subsection{Component Architecture}
+
+\subsubsection{React Hooks Usage}
+\begin{verbatim}
+// Custom hook example: useAuth.ts
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    
+    const login = async (email, password) => {
+        const response = await apiClient.post('/auth/login', 
+            { email, password });
+        localStorage.setItem('token', response.data.token);
+        return response.data;
+    };
+    
+    const logout = () => {
+        localStorage.removeItem('token');
+        context.setUser(null);
+    };
+    
+    return { ...context, login, logout };
+};
+\end{verbatim}
+
+\subsubsection{Protected Routes}
+\begin{verbatim}
+// routes.tsx
+const ProtectedRoute: React.FC<{element: JSX.Element}> = 
+    ({ element }) => {
+    const { user } = useAuth();
+    return user ? element : <Navigate to="/login" />;
+};
+
+export const routes = [
+    { path: '/', element: <HomePage /> },
+    { path: '/login', element: <LoginPage /> },
+    { path: '/profile/:id', 
+      element: <ProtectedRoute element={<ProfilePage />} /> },
+    { path: '/friends', 
+      element: <ProtectedRoute element={<FriendsPage />} /> },
+];
+\end{verbatim}
+
+\subsection{State Management}
+
+\subsubsection{React Context API}
+\begin{verbatim}
+// contexts/AuthContext.tsx
+export const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider: React.FC<{children: ReactNode}> = 
+    ({ children }) => {
+    const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(
+        localStorage.getItem('token'));
+    
+    useEffect(() => {
+        if (token) {
+            apiClient.defaults.headers.common['Authorization'] = 
+                `Bearer ${token}`;
+            // Verify token & load user
+        }
+    }, [token]);
+    
+    return (
+        <AuthContext.Provider value={{ user, token, setUser, setToken }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+\end{verbatim}
+
+\subsection{API Communication}
+
+\subsubsection{API Client Setup}
+\begin{verbatim}
+// services/apiClient.ts
+import axios from 'axios';
+
+export const apiClient = axios.create({
+    baseURL: process.env.REACT_APP_API_URL || 
+             'https://api.interacthub.com/api',
+    timeout: 10000,
+});
+
+// Request interceptor (add JWT token)
+apiClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+// Response interceptor (handle 401)
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+\end{verbatim}
+
+\subsection{Styling}
+
+\subsubsection{Tailwind CSS}
+Dự án sử dụng Tailwind CSS utility classes:
+
+\begin{verbatim}
+// Example: PostCard component
+<div className="bg-white rounded-lg shadow-md p-4 
+                hover:shadow-lg transition-shadow">
+    <div className="flex items-center mb-4">
+        <img src={post.user.avatar} 
+             className="w-10 h-10 rounded-full mr-3" />
+        <div>
+            <h3 className="font-bold">{post.user.name}</h3>
+            <p className="text-sm text-gray-500">
+                {formatDate(post.createdAt)}
+            </p>
+        </div>
+    </div>
+    
+    <p className="text-gray-800 mb-3">{post.content}</p>
+    
+    {post.imageUrl && (
+        <img src={post.imageUrl} 
+             className="w-full rounded-lg mb-3 
+                       max-h-96 object-cover" />
+    )}
+    
+    <div className="flex justify-between 
+                    text-gray-600 text-sm border-t pt-3">
+        <button className="hover:text-blue-500">
+            ❤️ {post.likes.length} Likes
+        </button>
+        <button className="hover:text-blue-500">
+            💬 {post.comments.length} Comments
+        </button>
+    </div>
+</div>
+\end{verbatim}
+
+\section{Configuration}
+
+\subsection{appsettings.json (Backend)}
+\begin{verbatim}
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=[server];Database=InteractHub;
+                         User Id=[user];Password=[password];"
+  },
+  "Jwt": {
+    "Key": "[your-secret-key-min-32-chars]",
+    "Issuer": "InteractHub.API",
+    "Audience": "InteractHub.Client",
+    "ExpirationMinutes": 60
+  },
+  "AzureStorage": {
+    "ConnectionString": "[azure-storage-connection-string]",
+    "ContainerName": "images"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
+  }
+}
+\end{verbatim}
+
+\subsection{.env.local (Frontend)}
+\begin{verbatim}
+REACT_APP_API_URL=https://api.interacthub.com/api
+REACT_APP_SIGNALR_HUB_URL=https://api.interacthub.com/notificationHub
+REACT_APP_ENVIRONMENT=production
+\end{verbatim}
+
+\section{Build \& Deployment}
+
+\subsection{Backend Build}
+\begin{verbatim}
+# Development
+dotnet run
+
+# Production build
+dotnet publish -c Release -o ./publish
+
+# Create docker image
+docker build -t interacthub-api:latest .
+docker push [registry]/interacthub-api:latest
+\end{verbatim}
+
+\subsection{Frontend Build}
+\begin{verbatim}
+# Install dependencies
+npm install
+
+# Development server
+npm run dev
+
+# Production build
+npm run build    # Creates dist/ folder
+npm run preview  # Preview production build
+\end{verbatim}

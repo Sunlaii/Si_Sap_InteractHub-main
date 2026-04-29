@@ -1,0 +1,195 @@
+\chapter{CƠ SỞ LÝ THUYẾT VÀ CÔNG NGHỆ SỬ DỤNG}
+
+\section{Công nghệ Frontend}
+\subsection{React 18+}
+React là thư viện JavaScript mã nguồn mở được phát triển bởi Facebook để xây dựng giao diện người dùng. Dự án sử dụng React 18+ với các tính năng hiện đại:
+
+\begin{itemize}
+    \item \textbf{Functional Components:} Sử dụng function-based components thay vì class components (cấu trúc hiện đại)
+    \item \textbf{React Hooks:} useState, useEffect, useContext, useReducer để quản lý state và side effects
+    \item \textbf{Concurrent Rendering:} Khả năng render không đồng bộ để cải thiện hiệu suất
+    \item \textbf{Suspense \& Code Splitting:} Tối ưu hóa tải ứng dụng
+\end{itemize}
+
+\subsection{TypeScript}
+Dự án sử dụng TypeScript với \textbf{strict mode} được bật để:
+
+\begin{itemize}
+    \item Cung cấp type safety - phát hiện lỗi tại thời điểm phát triển
+    \item Tìm kiếm nhanh hơn (IDE intellisense)
+    \item Dễ dàng tái cấu trúc code lớn
+    \item Giảm bugs trong production
+\end{itemize}
+
+\subsection{Tailwind CSS}
+Framework CSS utility-first cho phép:
+
+\begin{itemize}
+    \item Xây dựng giao diện responsive nhanh chóng
+    \item Tùy chỉnh design mà không viết custom CSS
+    \item Giảm kích thước file CSS (tree-shaking unused styles)
+    \item Đảm bảo consistency trong design tokens
+\end{itemize}
+
+\subsection{Quản lý state}
+Ứng dụng sử dụng \textbf{React Context API} kết hợp \textbf{useReducer} để:
+
+\begin{itemize}
+    \item Quản lý state toàn cục (global state)
+    \item Chia sẻ data giữa các components mà không prop drilling
+    \item Cung cấp authentication context, user profile, notifications
+\end{itemize}
+
+\section{Công nghệ Backend}
+
+\subsection{ASP.NET Core 8.0}
+Framework web hiện đại của Microsoft cho xây dựng RESTful API:
+
+\begin{itemize}
+    \item \textbf{Dependency Injection:} Built-in DI container
+    \item \textbf{Middleware Pipeline:} Xử lý requests theo trình tự
+    \item \textbf{CORS Support:} Cho phép cross-origin requests từ frontend
+    \item \textbf{Built-in Logging:} Logging và diagnostics
+\end{itemize}
+
+\subsection{Entity Framework Core 8.0}
+ORM (Object-Relational Mapper) mạnh mẽ cung cấp:
+
+\begin{itemize}
+    \item \textbf{Code-First Approach:} Định nghĩa database schema qua C\# code
+    \item \textbf{Migrations:} Quản lý version schema database
+    \item \textbf{LINQ Queries:} Viết query bằng C\# thay vì SQL
+    \item \textbf{Lazy Loading \& Eager Loading:} Tối ưu hóa số lượng queries
+    \item \textbf{Relationships:} Quản lý One-to-Many, Many-to-Many relations
+\end{itemize}
+
+\subsection{ASP.NET Core Identity}
+Hệ thống quản lý người dùng tích hợp:
+
+\begin{itemize}
+    \item Quản lý registration, login, password reset
+    \item Role-based access control (RBAC)
+    \item Claims-based authorization
+    \item Phân quyền (Users, Admins, Moderators)
+\end{itemize}
+
+\subsection{JWT (JSON Web Tokens)}
+Token-based authentication cho API:
+
+\begin{itemize}
+    \item Stateless authentication (không cần session server)
+    \item Token chứa claims về user (id, roles, permissions)
+    \item Signature bảo mật token không bị giả mạo
+    \item Expire time giới hạn thời gian sử dụng token
+\end{itemize}
+
+\subsection{SignalR}
+Thư viện real-time communication của ASP.NET Core:
+
+\begin{itemize}
+    \item \textbf{WebSocket Support:} Kết nối two-way real-time
+    \item \textbf{Automatic Fallback:} Fallback sang Server-Sent Events nếu WebSocket không available
+    \item \textbf{Hub Pattern:} Quản lý server-client messaging
+    \item \textbf{Broadcasting:} Gửi notifications cho nhiều clients cùng lúc
+\end{itemize}
+
+\section{Cơ sở dữ liệu}
+
+\subsection{SQL Server}
+Hệ quản trị cơ sở dữ liệu quan hệ của Microsoft:
+
+\begin{itemize}
+    \item \textbf{Scalability:} Hỗ trợ cơ sở dữ liệu lớn
+    \item \textbf{Reliability:} ACID transactions, backup \& recovery
+    \item \textbf{Indexes:} Tối ưu hóa query performance
+    \item \textbf{Constraints:} Đảm bảo data integrity
+\end{itemize}
+
+\subsection{Entity Framework Core Integration}
+Giao tiếp qua Entity Framework Core bằng cơ chế \textbf{Code-First}:
+
+\begin{itemize}
+    \item Định nghĩa entities như C\# classes
+    \item EF Core tự generate migrations
+    \item `Update-Database` command cập nhật schema
+    \item DbContext quản lý DbSets cho mỗi entity
+\end{itemize}
+
+\section{Công nghệ khác}
+
+\subsection{Swagger/OpenAPI}
+API documentation tự động tạo từ code:
+
+\begin{itemize}
+    \item Interactive API explorer (Swagger UI)
+    \item Tự động generate từ annotations/comments
+    \item Giúp frontend developers hiểu API endpoints
+\end{itemize}
+
+\subsection{Azure Services}
+Triển khai trên cloud:
+
+\begin{itemize}
+    \item \textbf{Azure App Service:} Host cho Web API
+    \item \textbf{Azure SQL Database:} Cơ sở dữ liệu cloud
+    \item \textbf{Azure Blob Storage:} Lưu trữ hình ảnh/files
+    \item \textbf{Azure Key Vault:} Bảo mật connection strings \& secrets
+    \item \textbf{Application Insights:} Monitoring \& diagnostics
+\end{itemize}
+
+\subsection{GitHub \& Version Control}
+Quản lý source code:
+
+\begin{itemize}
+    \item \textbf{Git:} Version control system
+    \item \textbf{GitHub:} Repository hosting \& collaboration
+    \item \textbf{GitHub Actions:} CI/CD automation
+\end{itemize}
+
+\section{Kiến trúc thiết kế}
+
+\subsection{Repository Pattern}
+Lớp trung gian giữa Business Logic và Data Access:
+
+\begin{itemize}
+    \item Tách biệt database logic từ business logic
+    \item Dễ testing (mock repositories)
+    \item Dễ thay đổi database implementation
+\end{itemize}
+
+\subsection{Service Layer Pattern}
+Chứa business logic của ứng dụng:
+
+\begin{itemize}
+    \item Validate data
+    \item Xử lý business rules
+    \item Điều phối repository calls
+\end{itemize}
+
+\subsection{DTO (Data Transfer Objects)}
+Truyền data giữa API và client:
+
+\begin{itemize}
+    \item Tránh truyền entities trực tiếp (security risk)
+    \item Kiểm soát fields được expose
+    \item Validation dữ liệu input từ client
+\end{itemize}
+
+\section{Thống kê mã nguồn}
+Dựa trên kho lưu trữ GitHub tại \url{https://github.com/Sunlaii/Si_Sap_InteractHub-main}:
+
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Công nghệ} & \textbf{Tỷ lệ} \\
+\hline
+TypeScript & 68.9\% \\
+C\# & 27.4\% \\
+TSQL & 2.1\% \\
+CSS & 1.4\% \\
+Khác & 0.2\% \\
+\hline
+\end{tabular}
+\end{center}
+
+Điều này cho thấy phần frontend (TypeScript) chiếm phần lớn, phản ánh sự phức tạp của giao diện người dùng trong một ứng dụng mạng xã hội.

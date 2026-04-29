@@ -1,0 +1,54 @@
+\chapter{GIỚI THIỆU ĐỀ TÀI}
+
+\section{Tổng quan dự án}
+InteractHub là một ứng dụng mạng xã hội trực tuyến đầy đủ tính năng (Full-Stack) cho phép người dùng chia sẻ trạng thái, hình ảnh, câu chuyện và tương tác trực tiếp với nhau. Dự án được xây dựng bằng các công nghệ hiện đại:
+
+\begin{itemize}
+    \item \textbf{Frontend:} React 18+ với TypeScript, Tailwind CSS
+    \item \textbf{Backend:} ASP.NET Core 8.0, Entity Framework Core 8.0
+    \item \textbf{Database:} SQL Server với migrations tự động
+    \item \textbf{Cloud:} Microsoft Azure (App Service, SQL Database, Blob Storage)
+    \item \textbf{Real-time:} SignalR cho thông báo thời gian thực
+\end{itemize}
+
+\section{Mục tiêu đề tài}
+Dự án được thực hiện nhằm rèn luyện các mục tiêu học tập cốt lõi:
+
+\begin{enumerate}
+    \item Thiết kế giao diện đáp ứng (Responsive Design) để phù hợp với mọi thiết bị
+    \item Xây dựng hệ thống RESTful API hoàn thiện và an toàn
+    \item Làm việc với Entity Framework Core - ORM mạnh mẽ của .NET
+    \item Triển khai ứng dụng lên nền tảng đám mây Azure
+    \item Tích hợp xác thực bảo mật bằng JWT tokens
+    \item Xây dựng các tính năng thời gian thực với SignalR
+\end{enumerate}
+
+\section{Đối tượng và phạm vi}
+\subsection{Đối tượng sử dụng}
+Hệ thống được thiết kế cho hai nhóm người dùng chính:
+
+\begin{itemize}
+    \item \textbf{Người dùng thông thường (Regular Users):} Có thể đăng tin bài viết, story, kết bạn, tương tác, nhận thông báo
+    \item \textbf{Quản trị viên (Admin):} Có quyền quản lý nội dung, xử lý báo cáo vi phạm, quản lý người dùng
+\end{itemize}
+
+\subsection{Phạm vi chức năng}
+Dự án tập trung vào các nghiệp vụ chính:
+
+\begin{enumerate}
+    \item \textbf{Quản lý tài khoản:} Đăng ký, đăng nhập, cập nhật hồ sơ, bảo mật mật khẩu
+    \item \textbf{Đăng tin nội dung:} Tạo bài viết (Posts), câu chuyện ngắn hạn (Stories)
+    \item \textbf{Tương tác xã hội:} Thích (Like), bình luận (Comment), chia sẻ nội dung
+    \item \textbf{Kết nối mạng xã hội:} Gửi lời mời kết bạn, chấp nhận/từ chối, quản lý danh sách bạn bè
+    \item \textbf{Thông báo thời gian thực:} Nhận thông báo về hoạt động của bạn bè
+    \item \textbf{Quản lý nội dung:} Báo cáo nội dung vi phạm, xóa bài viết không phù hợp
+\end{enumerate}
+
+\section{Giới hạn và ràng buộc}
+\begin{itemize}
+    \item Ứng dụng frontend yêu cầu trình duyệt hỗ trợ HTML5 và JavaScript ES6+
+    \item Backend tương thích với .NET 10.0 trở lên
+    \item Cơ sở dữ liệu sử dụng SQL Server 2016 hoặc cao hơn
+    \item Triển khai trên Azure yêu cầu subscription Azure hợp lệ
+    \item Kích thước file upload tối đa: 50 MB cho hình ảnh
+\end{itemize}

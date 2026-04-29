@@ -1,0 +1,116 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage{fontspec}
+\usepackage[vietnamese]{babel}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+
+% Sử dụng font Calibri hoặc Arial (đã cài sẵn trên Windows)
+\setmainfont{Calibri}
+\setsansfont{Calibri}
+\setmonofont{Consolas}
+
+\geometry{a4paper, left=3cm, right=2cm, top=2cm, bottom=2cm}
+
+\title{
+    \Large \textbf{TRƯỜNG ĐẠI HỌC SÀI GÒN} \\
+    \large \textbf{KHOA CÔNG NGHỆ THÔNG TIN} \\
+    \vspace{2cm}
+    \LARGE \textbf{ĐỒ ÁN MÔN: NGÔN NGỮ LẬP TRÌNH C\#} \\
+    \vspace{1cm}
+    \huge \textbf{XÂY DỰNG NỀN TẢNG TƯƠNG TÁC TRỰC TUYẾN INTERACT HUB} \\
+    \vspace{2cm}
+}
+\author{
+    \textbf{Thành viên nhóm:}\\
+    Nguyễn Nguyên Bảo - 3123410027 \\
+    Nguyễn Tường Huy - 3123410128 \\
+    Hứa Minh Nhật - 3123410245 \\
+    \vspace{1cm} \\
+    \textbf{Giảng viên hướng dẫn:} Từ Lãng Phiêu
+}
+\date{TP. Hồ Chí Minh, Ngày 24 tháng 11 năm 2025}
+
+\begin{document}
+
+\maketitle
+
+\chapter*{LỜI MỞ ĐẦU}
+\addcontentsline{toc}{chapter}{LỜI MỞ ĐẦU}
+
+\textbf{Bảng phân công thành viên:}
+
+\vspace{0.5cm}
+\begin{center}
+\begin{tabular}{|c|l|p{6cm}|c|}
+\hline
+\textbf{MSSV} & \textbf{Họ tên} & \textbf{Công việc} & \textbf{ĐÁNH GIÁ} \\
+\hline
+3123410027 & Nguyễn Nguyên Bảo & & \\
+\hline
+3123410128 & Nguyễn Tường Huy & & \\
+\hline
+3123410245 & Hứa Minh Nhật & & \\
+\hline
+\end{tabular}
+\end{center}
+
+\tableofcontents
+\newpage
+
+% Import chapters
+\input{chapters/01-introduction}
+\newpage
+
+\input{chapters/02-technology}
+\newpage
+
+\input{chapters/03-analysis-design}
+\newpage
+
+\input{chapters/04-implementation}
+\newpage
+
+\input{chapters/05-testing-deployment}
+\newpage
+
+\input{chapters/06-results-conclusion}
+\newpage
+
+\chapter*{TÀI LIỆU THAM KHẢO}
+\addcontentsline{toc}{chapter}{TÀI LIỆU THAM KHẢO}
+
+\begin{enumerate}
+    \item Microsoft. (2024). ASP.NET Core Documentation. Retrieved from https://docs.microsoft.com/aspnet/core
+    
+    \item Microsoft. (2024). Entity Framework Core - Modern Object-Database Mapper. Retrieved from https://docs.microsoft.com/ef/core
+    
+    \item Microsoft. (2024). Azure App Service - Build and Host Web Apps. Retrieved from https://docs.microsoft.com/azure/app-service
+    
+    \item Microsoft. (2024). Azure SQL Database - Managed Relational Database. Retrieved from https://docs.microsoft.com/azure/azure-sql/database/
+    
+    \item Microsoft. (2024). Azure Blob Storage - Object Storage Solution. Retrieved from https://docs.microsoft.com/azure/storage/blobs/
+    
+    \item TypeScript. (2024). TypeScript Handbook. Retrieved from https://www.typescriptlang.org/docs/
+    
+    \item React. (2024). React Documentation - A JavaScript Library for Building UIs. Retrieved from https://react.dev
+    
+    \item Tailwind Labs. (2024). Tailwind CSS Documentation. Retrieved from https://tailwindcss.com/docs
+    
+    \item Microsoft. (2024). ASP.NET Core Identity - User Management System. Retrieved from https://docs.microsoft.com/aspnet/core/security/authentication/identity
+    
+    \item Auth0. (2024). JSON Web Tokens (JWT) - Introduction. Retrieved from https://jwt.io/introduction
+    
+    \item Freeman, A. (2022). Pro Entity Framework Core. Apress.
+    
+    \item Martin, R. C. (2008). Clean Code: A Handbook of Agile Software Craftsmanship. Prentice Hall.
+    
+    \item Evans, E. (2003). Domain-Driven Design: Tackling Complexity in the Heart of Software. Addison-Wesley.
+    
+    \item GitHub. Si\_Sap\_InteractHub Repository. Retrieved from https://github.com/Sunlaii/Si\_Sap\_InteractHub-main
+\end{enumerate}
+
+\end{document}

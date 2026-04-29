@@ -1,0 +1,343 @@
+\chapter{PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG}
+
+\section{Phân tích yêu cầu chức năng}
+
+\subsection{Yêu cầu chức năng chính}
+Dự án InteractHub cung cấp các chức năng sau:
+
+\begin{enumerate}
+    \item \textbf{Quản lý tài khoản:}
+    \begin{itemize}
+        \item Đăng ký tài khoản mới
+        \item Đăng nhập với xác thực JWT
+        \item Cập nhật hồ sơ người dùng
+        \item Thay đổi mật khẩu an toàn
+        \item Đăng xuất và huỷ token
+    \end{itemize}
+
+    \item \textbf{Đăng tin nội dung:}
+    \begin{itemize}
+        \item Tạo bài viết (Posts) với text và hình ảnh
+        \item Tạo câu chuyện ngắn hạn (Stories) - tự xóa sau 24 giờ
+        \item Chỉnh sửa bài viết của mình
+        \item Xóa bài viết
+        \item Đặt hashtag cho bài viết
+    \end{itemize}
+
+    \item \textbf{Tương tác xã hội:}
+    \begin{itemize}
+        \item Thích/Bỏ thích bài viết (Like)
+        \item Bình luận (Comment) trên bài viết
+        \item Xem danh sách người thích bài viết
+        \item Tìm kiếm bài viết theo hashtag
+    \end{itemize}
+
+    \item \textbf{Kết nối mạng xã hội:}
+    \begin{itemize}
+        \item Gửi lời mời kết bạn (Friendship Request)
+        \item Chấp nhận/Từ chối lời mời
+        \item Xem danh sách bạn bè
+        \item Bỏ kết bạn với người khác
+        \item Xem hồ sơ người dùng khác
+    \end{itemize}
+
+    \item \textbf{Thông báo thời gian thực:}
+    \begin{itemize}
+        \item Nhận thông báo khi bạn bè thích bài
+        \item Nhận thông báo khi bạn bè bình luận
+        \item Nhận thông báo lời mời kết bạn
+        \item Đánh dấu thông báo đã đọc
+        \item Xóa thông báo cũ
+    \end{itemize}
+
+    \item \textbf{Quản lý nội dung:}
+    \begin{itemize}
+        \item Báo cáo bài viết vi phạm (Report)
+        \item Xem danh sách báo cáo (admin)
+        \item Xóa bài viết vi phạm (admin)
+        \item Cấm/Hạn chế người dùng (admin)
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Yêu cầu phi chức năng}
+\begin{enumerate}
+    \item \textbf{Performance:} API phản hồi trong < 500ms ở điều kiện bình thường
+    \item \textbf{Scalability:} Hỗ trợ hàng trăm concurrent users
+    \item \textbf{Security:} Mã hóa JWT, HTTPS, SQL injection prevention
+    \item \textbf{Availability:} 99.9\% uptime trên Azure
+    \item \textbf{Usability:} Giao diện responsive, dễ sử dụng trên mobile
+\end{enumerate}
+
+\section{Thiết kế Cơ sở dữ liệu}
+
+\subsection{Entity Relationship Diagram}
+Hệ thống sử dụng 10 entities chính được thiết kế chuẩn hóa (3NF):
+
+\begin{enumerate}
+    \item \textbf{ApplicationUser:} Người dùng hệ thống (Identity User)
+    \item \textbf{Post:} Bài viết chính của người dùng
+    \item \textbf{Story:} Câu chuyện tạm thời (24 giờ)
+    \item \textbf{Comment:} Bình luận trên bài viết
+    \item \textbf{Like:} Thích bài viết hoặc comment
+    \item \textbf{Friendship:} Quan hệ kết bạn giữa hai người dùng
+    \item \textbf{Notification:} Thông báo cho người dùng
+    \item \textbf{Hashtag:} Thẻ hashtag để phân loại bài viết
+    \item \textbf{PostHashtag:} Quan hệ Many-to-Many giữa Post và Hashtag
+    \item \textbf{PostReport:} Báo cáo bài viết vi phạm
+\end{enumerate}
+
+\subsection{Quan hệ giữa các entities}
+
+\subsubsection{One-to-Many (1:N) Relationships}
+\begin{itemize}
+    \item ApplicationUser → Posts (một user có nhiều posts)
+    \item ApplicationUser → Stories (một user có nhiều stories)
+    \item ApplicationUser → Comments (một user có nhiều comments)
+    \item ApplicationUser → Likes (một user có nhiều likes)
+    \item ApplicationUser → Notifications (một user nhận nhiều notifications)
+    \item Post → Comments (một post có nhiều comments)
+    \item Post → Likes (một post được like bởi nhiều users)
+    \item Post → PostReports (một post có nhiều reports)
+    \item Post → PostHashtags (một post có nhiều hashtags)
+\end{itemize}
+
+\subsubsection{Many-to-Many (N:M) Relationships}
+\begin{itemize}
+    \item \textbf{Post ↔ Hashtag:} Thông qua bảng PostHashtag
+    \begin{verbatim}
+Post (Id, Content, ImageUrl, UserId)
+    ↓ (Many-to-Many)
+PostHashtag (PostId, HashtagId)
+    ↓ (Many-to-Many)
+Hashtag (Id, Name)
+    \end{verbatim}
+\end{itemize}
+
+\subsubsection{Self-referencing Relationships}
+\begin{itemize}
+    \item \textbf{ApplicationUser ↔ Friendship:} Quan hệ kết bạn giữa hai users
+    \begin{verbatim}
+Friendship (Id, SenderId, ReceiverId, Status)
+- SenderId references ApplicationUser(Id)
+- ReceiverId references ApplicationUser(Id)
+    \end{verbatim}
+\end{itemize}
+
+\subsection{Schema entities chính}
+
+\begin{verbatim}
+ApplicationUser (extends IdentityUser)
+├── Id (string, PK)
+├── UserName
+├── Email
+├── PasswordHash
+├── DisplayName
+├── Bio
+├── ProfileImageUrl
+├── IsActive
+└── CreatedAt
+
+Post
+├── Id (int, PK, Identity)
+├── Content (string, NOT NULL)
+├── ImageUrl (string)
+├── CreatedAt (DateTime)
+├── UpdatedAt (DateTime)
+├── UserId (string, FK → ApplicationUser)
+└── User (Navigation)
+
+Comment
+├── Id (int, PK)
+├── Content (string)
+├── PostId (int, FK → Post)
+├── UserId (string, FK → ApplicationUser)
+├── CreatedAt (DateTime)
+└── UpdatedAt (DateTime)
+
+Like
+├── Id (int, PK)
+├── PostId (int, FK → Post)
+├── UserId (string, FK → ApplicationUser)
+└── CreatedAt (DateTime)
+
+Friendship
+├── Id (int, PK)
+├── SenderId (string, FK → ApplicationUser)
+├── ReceiverId (string, FK → ApplicationUser)
+└── Status (string: Pending, Accepted)
+
+Notification
+├── Id (int, PK)
+├── UserId (string, FK → ApplicationUser)
+├── Type (string: Like, Comment, FriendRequest)
+├── Content (string)
+├── IsRead (bool)
+└── CreatedAt (DateTime)
+
+Hashtag
+├── Id (int, PK)
+├── Name (string, UNIQUE)
+└── CreatedAt (DateTime)
+
+PostHashtag (Junction Table)
+├── PostId (int, FK → Post)
+└── HashtagId (int, FK → Hashtag)
+\end{verbatim}
+
+\section{Kiến trúc hệ thống}
+
+\subsection{Mô hình kiến trúc tổng thể}
+Hệ thống tuân theo mô hình \textbf{Client-Server} với 3 tầng chính:
+
+\begin{enumerate}
+    \item \textbf{Presentation Layer (Frontend):}
+    \begin{itemize}
+        \item React SPA chạy trên trình duyệt
+        \item Giao tiếp qua HTTP REST API
+        \item WebSocket cho real-time notifications (SignalR)
+        \item State management qua Context API
+    \end{itemize}
+
+    \item \textbf{API Layer (Backend):}
+    \begin{itemize}
+        \item ASP.NET Core Controllers
+        \item RESTful endpoints
+        \item JWT authentication middleware
+        \item SignalR Hubs cho real-time communication
+    \end{itemize}
+
+    \item \textbf{Data Layer:}
+    \begin{itemize}
+        \item SQL Server database
+        \item Entity Framework Core (ORM)
+        \item Stored procedures (optional)
+        \item Database migrations
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Kiến trúc Backend chi tiết}
+\begin{verbatim}
+Controllers (HTTP endpoints)
+    ↓ (depends on)
+Services (Business logic)
+    ↓ (depends on)
+Repositories (Data access)
+    ↓ (depends on)
+DbContext (Entity Framework)
+    ↓ (queries)
+SQL Server Database
+\end{verbatim}
+
+\subsection{API Communication Flow}
+\begin{verbatim}
+Client (React)
+    ↓ HTTP Request (with JWT token in header)
+API Gateway / CORS Middleware
+    ↓
+Authentication Middleware (JWT validation)
+    ↓
+Authorization Middleware (Role-based)
+    ↓
+Controller Action
+    ↓
+Service Layer (validate, process)
+    ↓
+Repository Layer (CRUD operations)
+    ↓
+DbContext (LINQ queries)
+    ↓
+SQL Server
+    ↓
+Response serialized to JSON
+    ↓
+Client receives data
+\end{verbatim}
+
+\subsection{Real-time Communication (SignalR)}
+\begin{verbatim}
+Client WebSocket Connection
+    ↓
+SignalR Hub
+    ↓
+Broadcast event to connected clients
+    ↓
+Clients receive updates in real-time
+\end{verbatim}
+
+\section{API Endpoints Design}
+
+\subsection{RESTful Convention}
+Dự án sử dụng RESTful principles:
+
+\begin{verbatim}
+GET    /api/posts              - Lấy danh sách bài viết
+GET    /api/posts/{id}         - Lấy chi tiết bài viết
+POST   /api/posts              - Tạo bài viết mới
+PUT    /api/posts/{id}         - Cập nhật bài viết
+DELETE /api/posts/{id}         - Xóa bài viết
+
+GET    /api/users/{id}         - Lấy thông tin user
+PUT    /api/users/{id}         - Cập nhật hồ sơ user
+GET    /api/users/{id}/friends - Danh sách bạn bè
+
+POST   /api/auth/register      - Đăng ký
+POST   /api/auth/login         - Đăng nhập
+POST   /api/auth/logout        - Đăng xuất
+POST   /api/auth/refresh-token - Làm mới token
+
+POST   /api/posts/{id}/like    - Like bài viết
+DELETE /api/posts/{id}/like    - Bỏ like
+GET    /api/posts/{id}/likes   - Danh sách người like
+
+POST   /api/posts/{id}/comments      - Bình luận
+GET    /api/posts/{id}/comments      - Lấy comments
+DELETE /api/comments/{id}            - Xóa comment
+
+POST   /api/friendships/request      - Gửi lời mời
+PUT    /api/friendships/{id}/accept  - Chấp nhận
+PUT    /api/friendships/{id}/reject  - Từ chối
+GET    /api/friendships              - Lấy danh sách bạn bè
+
+GET    /api/notifications            - Lấy thông báo
+PUT    /api/notifications/{id}/read  - Đánh dấu đã đọc
+
+POST   /api/reports                  - Báo cáo nội dung
+GET    /api/reports                  - Danh sách báo cáo (admin)
+\end{verbatim}
+
+\section{Security Design}
+
+\subsection{Authentication}
+\begin{itemize}
+    \item Sử dụng JWT (JSON Web Tokens) cho stateless authentication
+    \item Token chứa user ID, roles, và claims
+    \item Expiration time: 1 giờ cho access token
+    \item Refresh token để lấy access token mới
+    \item Server verify signature bằng secret key
+\end{itemize}
+
+\subsection{Authorization}
+\begin{itemize}
+    \item Role-based access control (RBAC)
+    \item Roles: User, Admin, Moderator
+    \item Policy-based authorization cho endpoints nhạy cảm
+    \item Verify user ownership trước khi update/delete resources
+\end{itemize}
+
+\subsection{Data Protection}
+\begin{itemize}
+    \item Password hashing bằng bcrypt (qua Identity)
+    \item HTTPS/TLS cho tất cả communications
+    \item SQL parameterized queries để prevent SQL injection
+    \item Input validation trên client và server
+    \item XSS prevention qua content encoding
+\end{itemize}
+
+\subsection{Azure Security}
+\begin{itemize}
+    \item Secrets stored in Azure Key Vault
+    \item Connection strings encrypted
+    \item SSL certificates quản lý bởi Azure
+    \item Network security groups (NSG) rules
+    \item Application Insights monitoring
+\end{itemize}
